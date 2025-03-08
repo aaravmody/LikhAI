@@ -1,5 +1,5 @@
 .env
 likhaienv/
 script.txt
-script.py
 sound_suggestor.py
+__pycache__/

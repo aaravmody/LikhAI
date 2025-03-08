@@ -3,7 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import google.generativeai as genai
 import json
+import textstat
+import spacy
 import os
+import re
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -16,19 +19,20 @@ model = genai.GenerativeModel('gemini-2.0-flash-lite')
 app = FastAPI(
     title="FastAPI Boilerplate",
     description="A simple FastAPI boilerplate with CORS support and health check.",
-    version="1.0.0"
+    version="2.0.0"
 )
 
 # CORS settings
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Adjust this in production
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 class ScriptInput(BaseModel):
+    script_text: str
+class TextInput(BaseModel):
     script_text: str
 
 cached_analysis = None  # Store the last analyzed script response
@@ -43,11 +47,22 @@ def analyze_script(script_content):
         "sound_effects": ["List of relevant sound effects"],
         "visual_cues": ["List of environmental and visual elements"],
         "characters": [
+        // keep the threshold for something to be considered an emotion or a description to be low
             {{
                 "name": "Character name",
-                "emotion": "Character emotions"
+                "emotion": "Character emotions",
+                "description": (upto 2 sentences at a maximum)
             }}
         ]
+        "readability_score": "Flesch-Kincaid readability score",
+        "sentiment": "Sentiment of the scene",
+        "poetic_devices": {
+            "example_device": {
+                "count": "Number of times used",
+                "examples": ["List of examples"]
+            }
+        },
+        "narrative_direction":[very concise summary of ]
     }}
     ```
     Ensure the response is always valid JSON, with no additional text or commentary.
@@ -101,4 +116,22 @@ def get_script_stats():
     
     return {"stats": stats}
 
-# Run the app with: uvicorn filename:app --reload
+@app.get("/readability")
+def get_readability_score():
+    if cached_analysis is None:
+        return {"readability_score": 0}
+    return {"readability_score": cached_analysis.get("readability_score", 0)}
+
+@app.get("/narrative_direction")
+def get_narrative_direction():
+    if cached_analysis is None:
+        return {"narrative_direction": "No analysis available"}
+    return {"narrative_direction": cached_analysis.get("narrative_direction", "No analysis available")}
+
+@app.get("/poetic_devices")
+def get_poetic_devices():
+    if cached_analysis is None:
+        return {"poetic_devices": {}}
+    return {"poetic_devices": cached_analysis.get("poetic_devices", {})}
+
+#uvicorn scene_enhancer:app --reload
