@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { BookOpenIcon } from '@heroicons/react/outline';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -39,6 +40,13 @@ const Navbar = () => {
               className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
             >
               Dashboard
+            </Link>
+            <Link
+              to="/tutorials"
+              className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+            >
+              <BookOpenIcon className="h-5 w-5 mr-1" />
+              Tutorials
             </Link>
             
             {user ? (

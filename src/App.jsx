@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import ProjectDetails from './pages/ProjectDetails';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Tutorials from './pages/Tutorials';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -30,6 +31,7 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
+                  <Route path="/tutorials" element={<Tutorials />} />
                   <Route
                     path="/editor/new"
                     element={
