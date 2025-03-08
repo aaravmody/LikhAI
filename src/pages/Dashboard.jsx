@@ -80,8 +80,10 @@ const Dashboard = () => {
       });
 
       if (response.data.success) {
-        setProjects([...projects, response.data.project]);
-        navigate(`/project/${response.data.project._id}`);
+        const newProject = response.data.project;
+        setProjects([...projects, newProject]);
+        // Navigate to new document creation with project ID
+        navigate('/editor/new', { state: { projectId: newProject._id } });
       }
     } catch (error) {
       console.error('Error creating project:', error);

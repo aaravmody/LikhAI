@@ -6,7 +6,7 @@ import { documentVersionModel } from '../models/documentVersion.model.js';
 
 const createDocument = async (req, res) => {
     try {
-        const { token, title, description, projectId } = req.body;
+        const { token, title, description, projectId, content } = req.body;
 
         if (!token) {
             return res.status(401).json({ success: false, message: 'Unauthorized: Token required' });
@@ -39,7 +39,7 @@ const createDocument = async (req, res) => {
             projectId: projectId || null,
             title: title || 'Untitled Document',
             description: description || '',
-            content: '',
+            content: content || '',
             comments: [],
             currentVersion: 0  // Initialize currentVersion
         });
@@ -49,7 +49,7 @@ const createDocument = async (req, res) => {
         // Create initial version
         const initialVersion = new documentVersionModel({
             documentId: newDocument._id,
-            content: '',
+            content: content || '',  // Use the content from request or empty string
             versionNumber: 1,  // Start from 1
             savedBy: user._id
         });
@@ -66,13 +66,14 @@ const createDocument = async (req, res) => {
                 _id: newDocument._id,
                 title: newDocument.title,
                 description: newDocument.description,
+                content: newDocument.content,
                 createdAt: newDocument.createdAt,
                 projectId: newDocument.projectId
             }
         });
     } catch (error) {
         console.error('Error creating document:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
     }
 };
 

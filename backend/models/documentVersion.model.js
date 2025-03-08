@@ -8,7 +8,7 @@ const documentVersionSchema = new mongoose.Schema({
     },
     content: {
         type: String,
-        required: true
+        default: ''
     },
     versionNumber: {
         type: Number,

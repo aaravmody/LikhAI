@@ -61,6 +61,7 @@ const ProjectDetails = () => {
       const response = await axios.post(`${API_BASE_URL}/create-document`, {
         token,
         title: 'Untitled Document',
+        content: '',
         projectId: id
       });
 

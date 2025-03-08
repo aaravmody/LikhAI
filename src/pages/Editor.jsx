@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { ChatAlt2Icon, ChartBarIcon, ClockIcon } from '@heroicons/react/outline';
 import Navbar from '../components/Navbar';
@@ -12,6 +12,7 @@ const API_BASE_URL = 'http://localhost:5000/api/v1';
 const Editor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [document, setDocument] = useState({
     title: 'Untitled Document',
     content: '',
@@ -21,7 +22,7 @@ const Editor = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
-  const [projectId, setProjectId] = useState(null);
+  const [projectId, setProjectId] = useState(location.state?.projectId || null);
   const [isCommentSidebarOpen, setIsCommentSidebarOpen] = useState(false);
   const [isAIAnalysisSidebarOpen, setIsAIAnalysisSidebarOpen] = useState(false);
   const [isVersionSidebarOpen, setIsVersionSidebarOpen] = useState(false);
@@ -30,7 +31,14 @@ const Editor = () => {
 
   useEffect(() => {
     const fetchDocument = async () => {
-      if (id === 'new') return setLoading(false);
+      if (id === 'new') {
+        if (!location.state?.projectId) {
+          navigate('/dashboard');
+          return;
+        }
+        setLoading(false);
+        return;
+      }
 
       try {
         const token = localStorage.getItem('token');
@@ -50,13 +58,16 @@ const Editor = () => {
       } catch (error) {
         console.error('Error fetching document:', error);
         setError(error.response?.data?.message || 'Failed to fetch document');
+        if (error.response?.status === 404) {
+          navigate('/dashboard');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchDocument();
-  }, [id]);
+  }, [id, navigate, location.state]);
 
   const fetchVersions = async () => {
     if (!id || id === 'new') return;
@@ -99,11 +110,14 @@ const Editor = () => {
       }
 
       if (id === 'new') {
+        if (!projectId) {
+          throw new Error('No project selected');
+        }
+
         const response = await axios.post(`${API_BASE_URL}/create-document`, {
           token,
           title: document.title,
-          description: document.description,
-          content: editorContent,
+          content: editorContent || '',
           projectId
         });
 
@@ -115,7 +129,6 @@ const Editor = () => {
           token,
           documentId: id,
           title: document.title,
-          description: document.description,
           content: editorContent,
           createVersion
         });
@@ -126,7 +139,6 @@ const Editor = () => {
             content: editorContent,
             currentVersion: response.data.document.currentVersion
           }));
-          // Refresh versions if sidebar is open and we created a new version
           if (isVersionSidebarOpen && createVersion) {
             fetchVersions();
           }
