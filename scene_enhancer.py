@@ -3,10 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import google.generativeai as genai
 import json
-import textstat
-import spacy
 import os
-import re
 from dotenv import load_dotenv
 load_dotenv()
 
