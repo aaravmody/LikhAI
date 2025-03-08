@@ -72,11 +72,11 @@ const Home = () => {
             whileTap={{ scale: 0.95 }}
           >
             <Link
-              to="/editor/new"
+              to="/dashboard"
               className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:text-lg"
             >
-              Start Writing
-              <PencilAltIcon className="ml-2 h-5 w-5" />
+              Go to Dashboard
+              <DocumentTextIcon className="ml-2 h-5 w-5" />
             </Link>
           </motion.div>
         </motion.div>

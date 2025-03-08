@@ -49,8 +49,8 @@ const createProject = async (req, res) => {
 
         const newProject = new projectModel({
             userId: user._id,
-            name: title,
-            description,
+            name: title || 'Untitled Project',
+            description: description || '',
             docType: 'article', // Default type
             status: 'inprogess', // Default status
             collaborators: [] // Initially no collaborators
@@ -70,7 +70,7 @@ const createProject = async (req, res) => {
         });
     } catch (error) {
         console.error('Error creating project:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
     }
 };
 
@@ -115,8 +115,108 @@ const fetchProjects = async (req, res) => {
     }
 };
 
+const addCollaborator = async (req, res) => {
+    try {
+        const { token, projectId, collaboratorEmail, role } = req.body;
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Token required' });
+        }
+
+        // Verify token and get user
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userEmail = decoded.userIdentifier;
+
+        const user = await userModel.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Find project and verify ownership
+        const project = await projectModel.findById(projectId);
+        if (!project) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+
+        if (!project.userId.equals(user._id)) {
+            return res.status(403).json({ success: false, message: 'Only project owner can add collaborators' });
+        }
+
+        // Verify collaborator exists
+        const collaborator = await userModel.findOne({ email: collaboratorEmail });
+        if (!collaborator) {
+            return res.status(404).json({ success: false, message: 'Collaborator email not found' });
+        }
+
+        // Check if already a collaborator
+        const existingCollaborator = project.collaborators.find(c => c.user === collaboratorEmail);
+        if (existingCollaborator) {
+            existingCollaborator.role = role;
+        } else {
+            project.collaborators.push({
+                user: collaboratorEmail,
+                role: role
+            });
+        }
+
+        await project.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Collaborator added successfully',
+            collaborators: project.collaborators
+        });
+
+    } catch (error) {
+        console.error('Error adding collaborator:', error);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+    }
+};
+
+const removeCollaborator = async (req, res) => {
+    try {
+        const { token, projectId, collaboratorEmail } = req.body;
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Token required' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userEmail = decoded.userIdentifier;
+
+        const user = await userModel.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const project = await projectModel.findById(projectId);
+        if (!project) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+
+        if (!project.userId.equals(user._id)) {
+            return res.status(403).json({ success: false, message: 'Only project owner can remove collaborators' });
+        }
+
+        project.collaborators = project.collaborators.filter(c => c.user !== collaboratorEmail);
+        await project.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Collaborator removed successfully',
+            collaborators: project.collaborators
+        });
+
+    } catch (error) {
+        console.error('Error removing collaborator:', error);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+    }
+};
+
 export {
     getUserProjects,
     createProject,
-    fetchProjects
+    fetchProjects,
+    addCollaborator,
+    removeCollaborator
 }

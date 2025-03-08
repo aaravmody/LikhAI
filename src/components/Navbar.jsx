@@ -40,12 +40,6 @@ const Navbar = () => {
             >
               Dashboard
             </Link>
-            <button
-              onClick={() => navigate('/editor/new')}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              New Document
-            </button>
             
             {user ? (
               <div className="relative group">

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ChatAlt2Icon } from '@heroicons/react/outline';
 import Navbar from '../components/Navbar';
 import LikhAIEditor from '../components/LikhAIEditor';
+import CommentSidebar from '../components/CommentSidebar';
 
 const API_BASE_URL = 'http://localhost:5000/api/v1';
 
@@ -18,6 +20,7 @@ const Editor = () => {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [projectId, setProjectId] = useState(null);
+  const [isCommentSidebarOpen, setIsCommentSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -91,7 +94,6 @@ const Editor = () => {
       ...prev,
       title: newTitle
     }));
-    // Update document title for export
     document.title = `${newTitle} - LikhAI`;
   };
 
@@ -119,14 +121,33 @@ const Editor = () => {
           </div>
         )}
 
-        <LikhAIEditor
-          initialContent={document.content}
-          onSave={handleSave}
-          onTitleChange={handleTitleChange}
-          initialTitle={document.title}
-          isSaving={saving}
-          documentId={id === 'new' ? null : id}
-        />
+        <div className="relative">
+          <LikhAIEditor
+            initialContent={document.content}
+            onSave={handleSave}
+            onTitleChange={handleTitleChange}
+            initialTitle={document.title}
+            isSaving={saving}
+            documentId={id === 'new' ? null : id}
+          />
+
+          {id !== 'new' && (
+            <>
+              <button
+                onClick={() => setIsCommentSidebarOpen(!isCommentSidebarOpen)}
+                className="fixed right-4 top-24 z-50 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
+              >
+                <ChatAlt2Icon className="h-6 w-6" />
+              </button>
+
+              <CommentSidebar
+                isOpen={isCommentSidebarOpen}
+                onClose={() => setIsCommentSidebarOpen(false)}
+                documentId={id}
+              />
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

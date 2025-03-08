@@ -7,4 +7,4 @@ const userSchema = new mongoose.Schema({
     termscondition: { type: Boolean, required: true },
 },{ timestamps: true });
 
-export const userModel = mongoose.model('user', userSchema);
+export const userModel = mongoose.model('User', userSchema);

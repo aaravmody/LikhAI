@@ -223,9 +223,133 @@ const getUserDocuments = async (req, res) => {
     }
 };
 
+const addComment = async (req, res) => {
+    try {
+        const { token, documentId, text } = req.body;
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Token required' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userEmail = decoded.userIdentifier;
+
+        const user = await userModel.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const document = await documentModel.findById(documentId);
+        if (!document) {
+            return res.status(404).json({ success: false, message: 'Document not found' });
+        }
+
+        // Check if user has access to the document
+        if (document.projectId) {
+            const project = await projectModel.findById(document.projectId);
+            const hasAccess = project.userId.equals(user._id) || 
+                            project.collaborators.some(c => c.user === userEmail);
+            if (!hasAccess) {
+                return res.status(403).json({ success: false, message: 'Access denied to this document' });
+            }
+        } else if (!document.userId.equals(user._id)) {
+            return res.status(403).json({ success: false, message: 'Access denied to this document' });
+        }
+
+        const newComment = {
+            userId: user._id,
+            text,
+            createdAt: new Date()
+        };
+
+        document.comments.push(newComment);
+        await document.save();
+
+        // Populate user details for the new comment
+        const populatedDocument = await documentModel.findById(documentId)
+            .populate('comments.userId', 'email');
+
+        const formattedComment = populatedDocument.comments[populatedDocument.comments.length - 1];
+
+        res.status(201).json({
+            success: true,
+            message: 'Comment added successfully',
+            comment: {
+                _id: formattedComment._id,
+                text: formattedComment.text,
+                createdAt: formattedComment.createdAt,
+                user: {
+                    _id: formattedComment.userId._id,
+                    email: formattedComment.userId.email
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+    }
+};
+
+const getComments = async (req, res) => {
+    try {
+        const { token, documentId } = req.body;
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Token required' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userEmail = decoded.userIdentifier;
+
+        const user = await userModel.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const document = await documentModel.findById(documentId)
+            .populate('comments.userId', 'email');
+
+        if (!document) {
+            return res.status(404).json({ success: false, message: 'Document not found' });
+        }
+
+        // Check if user has access to the document
+        if (document.projectId) {
+            const project = await projectModel.findById(document.projectId);
+            const hasAccess = project.userId.equals(user._id) || 
+                            project.collaborators.some(c => c.user === userEmail);
+            if (!hasAccess) {
+                return res.status(403).json({ success: false, message: 'Access denied to this document' });
+            }
+        } else if (!document.userId.equals(user._id)) {
+            return res.status(403).json({ success: false, message: 'Access denied to this document' });
+        }
+
+        const formattedComments = document.comments.map(comment => ({
+            _id: comment._id,
+            text: comment.text,
+            createdAt: comment.createdAt,
+            user: {
+                _id: comment.userId._id,
+                email: comment.userId.email
+            }
+        }));
+
+        res.status(200).json({
+            success: true,
+            comments: formattedComments
+        });
+    } catch (error) {
+        console.error('Error fetching comments:', error);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+    }
+};
+
 export {
     createDocument,
     getDocument,
     updateDocument,
-    getUserDocuments
+    getUserDocuments,
+    addComment,
+    getComments
 };

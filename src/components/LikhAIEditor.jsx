@@ -180,10 +180,9 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
               height: 600,
               menubar: true,
               plugins: [
-                "advlist autolink lists link image charmap print preview anchor",
-                "searchreplace visualblocks code fullscreen",
-                "insertdatetime media table paste code help wordcount",
-                "export",
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'help', 'wordcount'
               ],
               toolbar:
                 "undo redo | formatselect | bold italic backcolor | " +
@@ -191,7 +190,9 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
                 "bullist numlist outdent indent | removeformat | help",
               skin: "oxide",
               content_css: "default",
-              export_file_types: ["pdf", "docx"],
+              content_style: "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px }",
+              branding: false,
+              promotion: false
             }}
           />
         )}
