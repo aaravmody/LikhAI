@@ -14,6 +14,7 @@ import Pricing from './pages/Pricing';
 import Features from './pages/Features';
 import About from './pages/About';
 import ProtectedRoute from './components/ProtectedRoute';
+import Tutorials from './pages/Tutorials';
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/features" element={<Features />} />
                     <Route path="/about" element={<About />} />
+                    <Route path="/tutorials" element={<Tutorials />} />
                     <Route
                       path="/editor/new"
                       element={

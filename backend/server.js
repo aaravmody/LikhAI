@@ -20,7 +20,12 @@ const server = createServer(app)
 setupWebSocket(server)
 
 app.use(express.json())
-app.use(cors())
+app.use(cors({
+    origin: ['http://localhost:3000', 'https://hackniche-extra-endpoints.onrender.com'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}))
 app.use(express.urlencoded({ extended: false }));
 
 const port = process.env.PORT
