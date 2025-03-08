@@ -7,13 +7,15 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDRaxp7P_hMJcIrn_vhR8Qvifzpw5RHsyA",
-  authDomain: "docs-clone-e4dca.firebaseapp.com",
-  projectId: "docs-clone-e4dca",
-  storageBucket: "docs-clone-e4dca.firebasestorage.app",
-  messagingSenderId: "1029042518747",
-  appId: "1:1029042518747:web:d63944a86cc74f0701eafe"
+  apiKey: "AIzaSyAoTY4qSdn6jhilkhhSbHnPzy6OkurwAzo",
+  authDomain: "likhai-ba48e.firebaseapp.com",
+  projectId: "likhai-ba48e",
+  storageBucket: "likhai-ba48e.appspot.com",
+  messagingSenderId: "945456427929",
+  appId: "1:945456427929:web:9ad30df06af83877d59908",
+  measurementId: "G-G7RPJ85B54"
 };
+
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
