@@ -29,8 +29,8 @@ const projectSchema = new mongoose.Schema({
     status: { 
         type: String, 
         required: true, 
-        enum: ["inprogess", "todo", "undereview"],
-        default: "inprogess"
+        enum: ["inprogress", "todo", "underreview"],
+        default: "todo"
     },
 }, { timestamps: true });
 

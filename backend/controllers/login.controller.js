@@ -127,7 +127,7 @@ const loginPasswordController = async (req, res) => {
 
     resetFailedAttempts(failedLoginAttempts, email);
 
-    const token = jwt.sign({ userIdentifier: user.email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ userIdentifier: user.email }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
     return res.status(200).json({
       success: true,
@@ -192,7 +192,7 @@ const verifyOtpController = async (req, res) => {
 
     const user = await userModel.findOne({ email: email });
 
-    const token = jwt.sign({ userIdentifier: user.email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ userIdentifier: user.email }, process.env.JWT_SECRET, { expiresIn: "30d" });
 
     return res.status(200).json({
       success: true,

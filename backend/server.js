@@ -6,7 +6,7 @@ import { connectDB } from './config/database.js'
 import { signupController } from './controllers/signup.controller.js'
 import { loginOtpController, loginPasswordController, verifyOtpController } from './controllers/login.controller.js'
 import { createProject, fetchProjects, addCollaborator, removeCollaborator, updateProject, deleteProject } from './controllers/project.controller.js'
-import { createDocument, getDocument, updateDocument, getUserDocuments, addComment, getComments } from './controllers/document.controller.js'
+import { createDocument, getDocument, updateDocument, getUserDocuments, addComment, getComments, getDocumentVersions, restoreVersion } from './controllers/document.controller.js'
 import { setupWebSocket } from './websocket.js'
 
 config()
@@ -45,6 +45,8 @@ app.post('/api/v1/update-document', updateDocument);
 app.post('/api/v1/get-user-documents', getUserDocuments);
 app.post('/api/v1/add-comment', addComment);
 app.post('/api/v1/get-comments', getComments);
+app.post('/api/v1/get-document-versions', getDocumentVersions);
+app.post('/api/v1/restore-version', restoreVersion);
 
 server.listen(port, () => {
     console.log(`Server running in port ${port}.`)

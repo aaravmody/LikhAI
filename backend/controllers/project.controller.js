@@ -116,7 +116,7 @@ const fetchProjects = async (req, res) => {
             title: project.name,
             description: project.description,
             createdAt: project.createdAt,
-            category: project.status
+            status: project.status || 'todo'  // Ensure status is always defined
         }));
 
         res.status(200).json({ 

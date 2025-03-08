@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { XIcon, ChartBarIcon, UserGroupIcon, EmojiHappyIcon, DocumentTextIcon } from '@heroicons/react/outline';
 
+// const AI_API_BASE_URL = 'https://2fsnqvm4-8000.inc1.devtunnels.ms';
 const AI_API_BASE_URL = 'https://hackniche-extra-endpoints.onrender.com';
 
 const AIAnalysisSidebar = ({ isOpen, onClose, documentContent }) => {
@@ -32,7 +33,7 @@ const AIAnalysisSidebar = ({ isOpen, onClose, documentContent }) => {
       const statsResponse = await axios.get(`${AI_API_BASE_URL}/stats`);
       setStats(statsResponse.data.stats);
 
-      // Get aggregated report
+    //   Get aggregated report
       const reportResponse = await axios.get(`${AI_API_BASE_URL}/report`);
       setReport(reportResponse.data);
 
@@ -52,16 +53,18 @@ const AIAnalysisSidebar = ({ isOpen, onClose, documentContent }) => {
 
   return (
     <div className="fixed inset-y-0 right-0 w-96 bg-white dark:bg-gray-800 shadow-xl transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto">
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-          <ChartBarIcon className="h-5 w-5 mr-2" />
-          AI Analysis
-        </h2>
+      {/* Header */}
+      <div className="sticky top-0 bg-white dark:bg-gray-800 flex items-center justify-between p-4 border-b dark:border-gray-700 z-10">
+        <div className="flex items-center space-x-2">
+          <ChartBarIcon className="h-5 w-5 text-indigo-600" />
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">AI Analysis</h2>
+        </div>
         <button
           onClick={onClose}
-          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2 text-xl font-bold"
+          aria-label="Close panel"
         >
-          <XIcon className="h-5 w-5" />
+          ×
         </button>
       </div>
 

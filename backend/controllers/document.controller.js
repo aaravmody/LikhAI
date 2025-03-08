@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import { userModel } from '../models/user.model.js';
 import { projectModel } from '../models/project.model.js';
 import { documentModel } from '../models/document.model.js';
+import { documentVersionModel } from '../models/documentVersion.model.js';
 
 const createDocument = async (req, res) => {
     try {
@@ -39,9 +40,23 @@ const createDocument = async (req, res) => {
             title: title || 'Untitled Document',
             description: description || '',
             content: '',
-            comments: []
+            comments: [],
+            currentVersion: 0  // Initialize currentVersion
         });
 
+        await newDocument.save();
+
+        // Create initial version
+        const initialVersion = new documentVersionModel({
+            documentId: newDocument._id,
+            content: '',
+            versionNumber: 1,  // Start from 1
+            savedBy: user._id
+        });
+        await initialVersion.save();
+
+        // Update document with initial version number
+        newDocument.currentVersion = 1;
         await newDocument.save();
 
         res.status(201).json({
@@ -114,7 +129,7 @@ const getDocument = async (req, res) => {
 
 const updateDocument = async (req, res) => {
     try {
-        const { token, documentId, title, description, content } = req.body;
+        const { token, documentId, title, description, content, createVersion = false } = req.body;
 
         if (!token) {
             return res.status(401).json({ success: false, message: 'Unauthorized: Token required' });
@@ -133,24 +148,31 @@ const updateDocument = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Document not found' });
         }
 
-        // Check if user has access to the document
-        if (document.projectId) {
-            const project = await projectModel.findById(document.projectId);
-            const hasAccess = project.userId.equals(user._id) || 
-                            project.collaborators.some(c => c.user === userEmail);
-            if (!hasAccess) {
-                return res.status(403).json({ success: false, message: 'Access denied to this document' });
-            }
-        } else if (!document.userId.equals(user._id)) {
-            return res.status(403).json({ success: false, message: 'Access denied to this document' });
+        // Only create a new version if explicitly requested
+        if (createVersion) {
+            // Get latest version number
+            const latestVersion = await documentVersionModel.findOne({ documentId })
+                .sort({ versionNumber: -1 });
+            
+            const newVersionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
+            
+            // Save the current version to document versions
+            const newVersion = new documentVersionModel({
+                documentId: document._id,
+                content: content || '',
+                versionNumber: newVersionNumber,
+                savedBy: user._id
+            });
+            await newVersion.save();
+            
+            // Update version number
+            document.currentVersion = newVersionNumber;
         }
 
-        // Update document
-        if (title) document.title = title;
-        if (description) document.description = description;
-        if (content !== undefined) document.content = content;
-        document.version += 1;
-
+        // Update the document
+        document.title = title || document.title;
+        document.description = description || document.description;
+        document.content = content || '';  // Ensure content is never undefined
         await document.save();
 
         res.status(200).json({
@@ -161,13 +183,12 @@ const updateDocument = async (req, res) => {
                 title: document.title,
                 description: document.description,
                 content: document.content,
-                version: document.version,
-                updatedAt: document.updatedAt
+                currentVersion: document.currentVersion
             }
         });
     } catch (error) {
         console.error('Error updating document:', error);
-        res.status(500).json({ success: false, message: 'Internal server error' });
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
     }
 };
 
@@ -345,11 +366,119 @@ const getComments = async (req, res) => {
     }
 };
 
+const getDocumentVersions = async (req, res) => {
+    try {
+        const { token, documentId } = req.body;
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Token required' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userEmail = decoded.userIdentifier;
+
+        const user = await userModel.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // Get latest version number
+        const latestVersion = await documentVersionModel.findOne({ documentId })
+            .sort({ versionNumber: -1 });
+        
+        const nextVersionNumber = latestVersion ? latestVersion.versionNumber + 1 : 1;
+
+        const versions = await documentVersionModel.find({ documentId })
+            .sort({ versionNumber: -1 })
+            .populate('savedBy', 'email fullname');  // Ensure we populate both email and fullname
+
+        res.status(200).json({
+            success: true,
+            versions: versions.map(v => ({
+                versionNumber: v.versionNumber,
+                content: v.content,
+                savedBy: {
+                    email: v.savedBy.email,
+                    fullname: v.savedBy.fullname || v.savedBy.email.split('@')[0]  // Fallback to email username if no fullname
+                },
+                createdAt: v.createdAt
+            }))
+        });
+    } catch (error) {
+        console.error('Error fetching document versions:', error);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+    }
+};
+
+const restoreVersion = async (req, res) => {
+    try {
+        const { token, documentId, versionNumber } = req.body;
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Token required' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userEmail = decoded.userIdentifier;
+
+        const user = await userModel.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const document = await documentModel.findById(documentId);
+        if (!document) {
+            return res.status(404).json({ success: false, message: 'Document not found' });
+        }
+
+        const versionToRestore = await documentVersionModel.findOne({
+            documentId,
+            versionNumber
+        });
+
+        if (!versionToRestore) {
+            return res.status(404).json({ success: false, message: 'Version not found' });
+        }
+
+        // Create new version with restored content
+        const newVersionNumber = document.currentVersion + 1;
+        const newVersion = new documentVersionModel({
+            documentId: document._id,
+            content: versionToRestore.content,
+            versionNumber: newVersionNumber,
+            savedBy: user._id
+        });
+        await newVersion.save();
+
+        // Update current document
+        document.content = versionToRestore.content;
+        document.currentVersion = newVersionNumber;
+        await document.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Version restored successfully',
+            document: {
+                _id: document._id,
+                title: document.title,
+                description: document.description,
+                content: document.content,
+                currentVersion: document.currentVersion
+            }
+        });
+    } catch (error) {
+        console.error('Error restoring version:', error);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+    }
+};
+
 export {
     createDocument,
     getDocument,
     updateDocument,
     getUserDocuments,
     addComment,
-    getComments
+    getComments,
+    getDocumentVersions,
+    restoreVersion
 };

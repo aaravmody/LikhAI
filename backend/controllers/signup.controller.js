@@ -29,7 +29,7 @@ export const signupController = async (req, res) => {
 
         await newUser.save();
 
-        const token = jwt.sign({ userIdentifier: newUser.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ userIdentifier: newUser.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
         return res.status(200).json({ message: 'User created successfully.', success: true, token });
     } catch (error) {
