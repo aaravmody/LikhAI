@@ -9,9 +9,9 @@ export const getUserDocuments = async (req, res) => {
             return res.status(401).json({ message: 'Unauthorized: Token required' });
         }
 
-        const secretKey = process.env.JWT_SECRET 
+        const secretKey = process.env.JWT_SECRET
         const decoded = jwt.verify(token, secretKey);
-        const userId = decoded.userIdentifier; 
+        const userId = decoded.userIdentifier;
 
         const projects = await projectModel.find({
             $or: [

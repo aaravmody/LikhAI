@@ -8,9 +8,8 @@ const projectSchema = new mongoose.Schema({
     },
     collaborators: [  
         {
-            userId: {
-                type: mongoose.Schema.Types.ObjectId,
-                ref: 'User',
+            user: {
+                type: String,
                 required: true,
             },
             role: {
@@ -20,6 +19,7 @@ const projectSchema = new mongoose.Schema({
             }
         }
     ],
+    name: { type: String, required: true, unique: true },
     docType: { 
         type: String, 
         required: true, 

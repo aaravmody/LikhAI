@@ -7,9 +7,9 @@ config()
 
 export const signupController = async (req, res) => {
     try {
-        const { email, phone, password, fullname, age, termscondition } = req.body;
+        const { email, phone, confirmPassword, termscondition } = req.body;
 
-        if (!email || !phone || !password || !fullname || !age || termscondition === undefined) {
+        if (!email || !phone || !confirmPassword || !termscondition) {
             return res.status(400).json({ message: 'All fields are required.',success:false });
         }
 
@@ -19,20 +19,22 @@ export const signupController = async (req, res) => {
         }
 
         const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const hashedPassword = await bcrypt.hash(confirmPassword, saltRounds);
 
         const newUser = new userModel({
             email,
             phone,
             password: hashedPassword,
-            fullname,
-            age,
             termscondition,
         });
+
+        console.log(newUser)
 
         await newUser.save();
 
         const token = jwt.sign({ userIdentifier: newUser.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        console.log(token)
 
         return res.status(200).json({ message: 'User created successfully.',success:true,token });
     } catch (error) {

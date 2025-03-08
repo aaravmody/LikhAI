@@ -1,23 +1,24 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useAuth0 } from "@auth0/auth0-react";
+import axios from 'axios'
+//import { useAuth0 } from "@auth0/auth0-react";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [termscondition, setTermsCondition] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const { loginWithRedirect } = useAuth0();
+  //const { loginWithRedirect } = useAuth0();
   const navigate = useNavigate();
 
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isValidPhone = /^[0-9]{10}$/;
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (!isValidEmail.test(email)) {
       setErrorMessage("Please enter a valid email.");
       return;
@@ -34,14 +35,24 @@ const Signup = () => {
       setErrorMessage("Passwords do not match.");
       return;
     }
-    if (!agreeTerms) {
+    if (!termscondition) {
       setErrorMessage("You must agree to the Terms & Conditions.");
       return;
     }
+    try {
+      const response = await axios.post(
+        "http://localhost:3000/api/v1/signup",
+        { email, phone, confirmPassword, termscondition },
+        { headers: { "Content-Type": "application/json" } }
+      );
 
-    setErrorMessage("");
-    toast.success("Signup Successful!", { autoClose: 2000 });
-    navigate("/login");
+      console.log(response)
+        toast.success(response.data.message, { autoClose: 700 });
+        navigate("/");
+    } catch (error) {
+      console.log(error)
+      setErrorMessage("Signup failed. Please try again.");
+    }
   };
 
   return (
@@ -84,8 +95,8 @@ const Signup = () => {
         <div className="flex items-center mb-4">
           <input
             type="checkbox"
-            checked={agreeTerms}
-            onChange={(e) => setAgreeTerms(e.target.checked)}
+            checked={termscondition}
+            onChange={(e) => setTermsCondition(e.target.checked)}
             className="mr-2"
           />
           <label className="text-sm">
@@ -107,7 +118,7 @@ const Signup = () => {
           <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
         )}
 
-        <div className="relative flex justify-center items-center my-4">
+        {/* <div className="relative flex justify-center items-center my-4">
           <span className="absolute bg-white px-2 text-gray-500">OR</span>
           <div className="w-full h-px bg-gray-300"></div>
         </div>
@@ -117,7 +128,7 @@ const Signup = () => {
           onClick={() => loginWithRedirect()}
         >
           <span className="text-gray-700 font-medium">Sign in with Google</span>
-        </button>
+        </button> */}
       </div>
     </div>
   );

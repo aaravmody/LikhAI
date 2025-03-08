@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
-import { userModel } from '../models/user.model';
+import { userModel } from '../models/user.model.js';
 import { config } from 'dotenv';
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
