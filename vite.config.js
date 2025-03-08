@@ -5,15 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3000,
-    open: true,
-    proxy: {
-      '/analyze': {
-        target: 'https://hackniche-extra-endpoints.onrender.com',
-        changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path
-      }
-    }
+    open: true
   },
   build: {
     outDir: 'dist',
