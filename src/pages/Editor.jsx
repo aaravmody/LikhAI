@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ChatAlt2Icon } from '@heroicons/react/outline';
+import { ChatAlt2Icon, ChartBarIcon } from '@heroicons/react/outline';
 import Navbar from '../components/Navbar';
 import LikhAIEditor from '../components/LikhAIEditor';
 import CommentSidebar from '../components/CommentSidebar';
+import AIAnalysisSidebar from '../components/AIAnalysisSidebar';
 
 const API_BASE_URL = 'http://localhost:5000/api/v1';
 
@@ -21,6 +22,7 @@ const Editor = () => {
   const [saving, setSaving] = useState(false);
   const [projectId, setProjectId] = useState(null);
   const [isCommentSidebarOpen, setIsCommentSidebarOpen] = useState(false);
+  const [isAIAnalysisSidebarOpen, setIsAIAnalysisSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -133,17 +135,38 @@ const Editor = () => {
 
           {id !== 'new' && (
             <>
-              <button
-                onClick={() => setIsCommentSidebarOpen(!isCommentSidebarOpen)}
-                className="fixed right-4 top-24 z-50 bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors"
-              >
-                <ChatAlt2Icon className="h-6 w-6" />
-              </button>
+              <div className="fixed right-4 top-24 z-50 space-y-4">
+                <button
+                  onClick={() => {
+                    setIsCommentSidebarOpen(!isCommentSidebarOpen);
+                    setIsAIAnalysisSidebarOpen(false);
+                  }}
+                  className="bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors block"
+                >
+                  <ChatAlt2Icon className="h-6 w-6" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsAIAnalysisSidebarOpen(!isAIAnalysisSidebarOpen);
+                    setIsCommentSidebarOpen(false);
+                  }}
+                  className="bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors block"
+                >
+                  <ChartBarIcon className="h-6 w-6" />
+                </button>
+              </div>
 
               <CommentSidebar
                 isOpen={isCommentSidebarOpen}
                 onClose={() => setIsCommentSidebarOpen(false)}
                 documentId={id}
+              />
+
+              <AIAnalysisSidebar
+                isOpen={isAIAnalysisSidebarOpen}
+                onClose={() => setIsAIAnalysisSidebarOpen(false)}
+                documentContent={document.content}
               />
             </>
           )}
