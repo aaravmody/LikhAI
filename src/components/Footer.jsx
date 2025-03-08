@@ -25,7 +25,7 @@ const Footer = () => {
             </h3>
             <ul className="space-y-2">
               <li>
-                <a href="/editor" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">
+                <a href="/dashboard" className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-500">
                   Start Writing
                 </a>
               </li>

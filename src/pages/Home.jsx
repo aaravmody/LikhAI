@@ -248,36 +248,18 @@ const Home = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center max-w-3xl mx-auto"
+            className="text-center max-w-4xl mx-auto"
           >
-            <motion.h1 
-              className={`text-5xl md:text-6xl font-extrabold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-6 leading-tight`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              Where AI meets your
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600 pl-2">
-                creative workflow
+            <h1 className={`text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight mb-8 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Write, Collaborate, and Create with{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">
+                AI-Powered Tools
               </span>
-            </motion.h1>
-
-            <motion.p 
-              className={`text-xl ${isDarkMode ? 'text-gray-300' : 'text-gray-600'} mb-10 max-w-2xl mx-auto leading-relaxed`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              A modern collaborative writing platform that streamlines your creative process, enhances team collaboration, and brings your ideas to life.
-            </motion.p>
-
-            <motion.div
-              className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
+            </h1>
+            <p className={`text-xl md:text-2xl mb-12 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              Transform your writing experience with real-time collaboration and AI assistance.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <motion.div
                 variants={buttonHoverVariants}
                 initial="initial"
@@ -285,24 +267,12 @@ const Home = () => {
                 whileTap="tap"
               >
                 <Link
-                  to="/dashboard"
-                  className="w-full sm:w-auto inline-flex justify-center items-center px-8 py-4 border border-transparent text-base font-medium rounded-lg text-white bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 shadow-lg"
+                  to="/signup"
+                  className="w-full sm:w-auto px-8 py-4 text-lg font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-500 rounded-xl shadow-lg hover:from-indigo-700 hover:to-indigo-600 transition-all duration-200"
                 >
-                  Get Started
-                  <motion.svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className="h-5 w-5 ml-2" 
-                    viewBox="0 0 20 20" 
-                    fill="currentColor"
-                    initial={{ x: 0 }}
-                    animate={{ x: [0, 5, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.5, repeatDelay: 1 }}
-                  >
-                    <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </motion.svg>
+                  Get Started Free
                 </Link>
               </motion.div>
-
               <motion.div
                 variants={buttonHoverVariants}
                 initial="initial"
@@ -311,40 +281,53 @@ const Home = () => {
               >
                 <Link
                   to="/tutorials"
-                  className={`w-full sm:w-auto inline-flex justify-center items-center px-8 py-4 border border-transparent text-base font-medium rounded-lg ${isDarkMode ? 'bg-gray-800 text-white hover:bg-gray-700' : 'bg-white text-gray-700 hover:bg-gray-50'} shadow-md`}
+                  className={`w-full sm:w-auto px-8 py-4 text-lg font-medium rounded-xl shadow-lg transition-all duration-200 ${
+                    isDarkMode
+                      ? 'bg-gray-800 text-white hover:bg-gray-700'
+                      : 'bg-white text-gray-900 hover:bg-gray-50'
+                  }`}
                 >
-                  <BookOpenIcon className="mr-2 h-5 w-5" />
-                  Watch Demo
+                  View Tutorials
                 </Link>
               </motion.div>
-            </motion.div>
+            </div>
           </motion.div>
 
-          {/* Hero Image/Graphic */}
+          {/* Editor Preview Image */}
           <motion.div
-            className="mt-20 relative max-w-5xl mx-auto"
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
+            transition={{ delay: 0.3 }}
+            className="mt-16 relative mx-auto max-w-5xl"
           >
-            <div className={`relative rounded-xl overflow-hidden shadow-2xl ${isDarkMode ? 'border border-gray-700' : ''}`}>
-              {/* App screenshot/mockup placeholder */}
-              <div className={`w-full aspect-video ${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-xl flex items-center justify-center`}>
-                <div className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  <DocumentTextIcon className="h-20 w-20 mx-auto opacity-20" />
-                  <p className="mt-2 font-medium">LikhAI Document Editor Preview</p>
+            <div className={`rounded-2xl shadow-2xl overflow-hidden ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
+              <div className={`h-8 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} flex items-center px-4`}>
+                <div className="flex space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 </div>
               </div>
-              
-              {/* Overlay effect */}
-              <div className="absolute inset-0 bg-gradient-to-t from-indigo-600/20 to-transparent opacity-60"></div>
+              <div className="relative">
+                <img
+                  src="landing.png"
+                  alt="LikhAI Editor Interface"
+                  className="w-full h-auto object-cover"
+                />
+                <div className={`absolute inset-0 pointer-events-none ${isDarkMode ? 'bg-gray-900' : 'bg-white'} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
+              </div>
             </div>
+            
+            {/* Decorative Elements */}
+            <div className="absolute -left-4 -top-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 animate-blob"></div>
+            <div className="absolute -right-4 -top-4 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 animate-blob animation-delay-2000"></div>
+            <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-2xl opacity-10 animate-blob animation-delay-4000"></div>
           </motion.div>
         </div>
 
-        {/* Decorative background elements */}
-        <div className="absolute top-20 right-0 w-72 h-72 bg-indigo-500 rounded-full filter blur-3xl opacity-10"></div>
-        <div className="absolute bottom-20 left-0 w-80 h-80 bg-purple-500 rounded-full filter blur-3xl opacity-10"></div>
+        {/* Background decorative elements */}
+        <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-indigo-500 rounded-full filter blur-3xl opacity-5"></div>
+        <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-purple-500 rounded-full filter blur-3xl opacity-5"></div>
       </section>
 
       {/* Features Section */}
