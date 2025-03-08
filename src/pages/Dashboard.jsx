@@ -11,13 +11,15 @@ const API_BASE_URL = 'http://localhost:5000/api/v1';
 const STATUS_COLORS = {
   todo: 'bg-yellow-400',
   inprogress: 'bg-blue-400',
-  underreview: 'bg-purple-400'
+  underreview: 'bg-purple-400',
+  completed: 'bg-green-400'
 };
 
 const STATUS_LABELS = {
   todo: 'To Do',
   inprogress: 'In Progress',
-  underreview: 'Under Review'
+  underreview: 'Under Review',
+  completed: 'Completed'
 };
 
 const Dashboard = () => {
@@ -25,7 +27,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
-  const [menuOpen, setMenuOpen] = useState(null); // Store the ID of the project with open menu
+  const [menuOpen, setMenuOpen] = useState(null);
+  const [statusUpdateLoading, setStatusUpdateLoading] = useState(null);
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
 
@@ -41,24 +44,24 @@ const Dashboard = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          throw new Error('No authentication token found');
-        }
-
-        const response = await axios.post(`${API_BASE_URL}/fetch-projects`, { token });
-        setProjects(response.data.projects || []);
-      } catch (error) {
-        console.error('Error fetching projects:', error);
-        setError(error.message || 'Failed to fetch projects');
-      } finally {
-        setLoading(false);
+  const fetchProjects = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
       }
-    };
 
+      const response = await axios.post(`${API_BASE_URL}/fetch-projects`, { token });
+      setProjects(response.data.projects || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      setError(error.message || 'Failed to fetch projects');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProjects();
   }, []);
 
@@ -88,6 +91,7 @@ const Dashboard = () => {
 
   const handleStatusChange = async (projectId, newStatus) => {
     try {
+      setStatusUpdateLoading(projectId);
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found');
@@ -108,7 +112,10 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Error updating project status:', error);
-      setError(error.message || 'Failed to update project status');
+      setError('Failed to update project status. Please try again.');
+      await fetchProjects();
+    } finally {
+      setStatusUpdateLoading(null);
     }
   };
 
@@ -141,6 +148,17 @@ const Dashboard = () => {
   const filteredProjects = projects.filter(project => {
     if (filter === 'all') return true;
     return project.status === filter;
+  }).sort((a, b) => {
+    const statusPriority = {
+      todo: 1,
+      inprogress: 2,
+      underreview: 3,
+      completed: 4
+    };
+    if (a.status !== b.status) {
+      return statusPriority[a.status] - statusPriority[b.status];
+    }
+    return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
   if (loading) {
@@ -233,6 +251,26 @@ const Dashboard = () => {
                   {menuOpen === project._id && (
                     <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 z-10">
                       <div className="py-1">
+                        {/* Status Update Options */}
+                        {Object.entries(STATUS_LABELS).map(([status, label]) => (
+                          <button
+                            key={status}
+                            onClick={() => {
+                              handleStatusChange(project._id, status);
+                              setMenuOpen(null);
+                            }}
+                            disabled={project.status === status || statusUpdateLoading === project._id}
+                            className={`flex items-center px-4 py-2 text-sm w-full text-left ${
+                              project.status === status
+                                ? 'bg-gray-100 dark:bg-gray-600 cursor-default'
+                                : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+                            }`}
+                          >
+                            <div className={`w-2 h-2 rounded-full ${STATUS_COLORS[status]} mr-2`} />
+                            {label}
+                          </button>
+                        ))}
+                        <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
                         <button
                           onClick={() => handleDeleteProject(project._id)}
                           className="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left"
@@ -245,42 +283,25 @@ const Dashboard = () => {
                   )}
                 </div>
 
-                <Link to={`/project/${project._id}`}>
+                <Link to={`/project/${project._id}`} className="block">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 pr-8">
-                    {project.title}
+                    {project.title || 'Untitled Project'}
                   </h3>
-                  <p className="text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">
+                  <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
                     {project.description || 'No description'}
                   </p>
-                </Link>
-
-                <div className="flex flex-col space-y-3">
-                  {/* Status Badge */}
                   <div className="flex items-center justify-between">
-                    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm font-medium ${
-                      project.status === 'todo' ? 'bg-yellow-100 text-yellow-800' :
-                      project.status === 'inprogress' ? 'bg-blue-100 text-blue-800' :
-                      'bg-purple-100 text-purple-800'
-                    }`}>
-                      <div className={`w-2 h-2 rounded-full ${STATUS_COLORS[project.status || 'todo']}`} />
-                      <select
-                        value={project.status || 'todo'}
-                        onChange={(e) => handleStatusChange(project._id, e.target.value)}
-                        className="bg-transparent border-none focus:ring-0 p-0 pr-6 appearance-none cursor-pointer"
-                        style={{ WebkitAppearance: 'none' }}
-                      >
-                        {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                          <option key={value} value={value} className="text-gray-900">
-                            {label}
-                          </option>
-                        ))}
-                      </select>
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-2 h-2 rounded-full ${STATUS_COLORS[project.status]}`} />
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        {STATUS_LABELS[project.status]}
+                      </span>
                     </div>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(project.createdAt).toLocaleDateString()}
-                    </span>
+                    {statusUpdateLoading === project._id && (
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
+                    )}
                   </div>
-                </div>
+                </Link>
               </div>
             ))}
           </div>

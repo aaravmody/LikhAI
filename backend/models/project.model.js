@@ -29,7 +29,7 @@ const projectSchema = new mongoose.Schema({
     status: { 
         type: String, 
         required: true, 
-        enum: ["inprogress", "todo", "underreview"],
+        enum: ["inprogess", "todo", "underreview"],
         default: "todo"
     },
 }, { timestamps: true });

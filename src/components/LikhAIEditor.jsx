@@ -218,7 +218,7 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
   const handleEditorChange = (newContent) => {
     setContent(newContent);
     if (autoSave) {
-      debouncedSave(newContent);
+    debouncedSave(newContent);
     }
   };
 
@@ -552,7 +552,7 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
           )}
         </motion.div>
       )}
-
+      
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
