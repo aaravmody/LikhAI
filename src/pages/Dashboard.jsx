@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -44,22 +45,22 @@ const Dashboard = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const fetchProjects = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+    const fetchProjects = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
 
-      const response = await axios.post(`${API_BASE_URL}/fetch-projects`, { token });
-      setProjects(response.data.projects || []);
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-      setError(error.message || 'Failed to fetch projects');
-    } finally {
-      setLoading(false);
-    }
-  };
+        const response = await axios.post(`${API_BASE_URL}/fetch-projects`, { token });
+        setProjects(response.data.projects || []);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        setError(error.message || 'Failed to fetch projects');
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
     fetchProjects();
@@ -163,6 +164,132 @@ const Dashboard = () => {
     return new Date(b.createdAt) - new Date(a.createdAt);
   });
 
+  // Animation variants
+  const fadeIn = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  const buttonHoverVariants = {
+    initial: { scale: 1 },
+    hover: { 
+      scale: 1.02,
+      boxShadow: isDarkMode 
+        ? '0 10px 25px -5px rgba(79, 70, 229, 0.4)' 
+        : '0 10px 25px -5px rgba(79, 70, 229, 0.3)',
+      transition: { duration: 0.2 }
+    },
+    tap: { scale: 0.98 }
+  };
+
+  const ProjectCard = ({ project }) => {
+    const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+    const statusMenuRef = useRef(null);
+
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (statusMenuRef.current && !statusMenuRef.current.contains(event.target)) {
+          setIsStatusMenuOpen(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    return (
+      <motion.div
+        variants={buttonHoverVariants}
+        initial="initial"
+        whileHover="hover"
+        whileTap="tap"
+        className={`relative rounded-xl shadow-lg overflow-hidden ${
+          isDarkMode ? 'bg-gray-800/60 backdrop-blur-sm' : 'bg-white/80 backdrop-blur-sm'
+        }`}
+      >
+        <Link to={`/project/${project._id}`} className="block p-6">
+          <h3 className={`text-xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            {project.title}
+          </h3>
+          <p className={`text-sm mb-4 line-clamp-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            {project.description || 'No description'}
+          </p>
+        </Link>
+
+        <div className="absolute top-4 right-4 z-20">
+          <div className="relative project-menu" ref={statusMenuRef}>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsStatusMenuOpen(!isStatusMenuOpen);
+              }}
+              className={`flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${STATUS_COLORS[project.status]} shadow-sm hover:opacity-90 transition-opacity`}
+            >
+              <span>{STATUS_LABELS[project.status]}</span>
+              <svg
+                className={`w-4 h-4 ml-1.5 transform transition-transform ${isStatusMenuOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            <AnimatePresence>
+              {isStatusMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className={`absolute right-0 mt-2 w-48 rounded-lg shadow-lg py-1 z-50 ${
+                    isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+                  }`}
+                  style={{ transform: 'translateY(0)', zIndex: 100 }}
+                >
+                  {Object.entries(STATUS_LABELS).map(([status, label]) => (
+                    <button
+                      key={status}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleStatusChange(project._id, status);
+                        setIsStatusMenuOpen(false);
+                      }}
+                      disabled={statusUpdateLoading === project._id}
+                      className={`w-full text-left px-4 py-2 text-sm ${
+                        isDarkMode ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-50'
+                      } flex items-center space-x-2 transition-colors`}
+                    >
+                      <span className={`w-3 h-3 rounded-full ${STATUS_COLORS[status]}`}></span>
+                      <span>{label}</span>
+                      {project.status === status && (
+                        <svg className="w-4 h-4 ml-auto" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        <div className={`px-6 py-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            Created {new Date(project.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -172,142 +299,95 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-indigo-50 via-white to-gray-50'} transition-colors duration-300`}>
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Projects</h1>
-          <button
+      {/* Decorative elements */}
+      <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-indigo-500 rounded-full filter blur-3xl opacity-5"></div>
+      <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-purple-500 rounded-full filter blur-3xl opacity-5"></div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <motion.div 
+          variants={fadeIn}
+          initial="hidden"
+          animate="visible"
+          className="flex justify-between items-center mb-12"
+        >
+          <h1 className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            My Projects
+          </h1>
+          <motion.button
+            variants={buttonHoverVariants}
+            initial="initial"
+            whileHover="hover"
+            whileTap="tap"
             onClick={handleCreateProject}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-medium rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-600 transition-all duration-200"
           >
             New Project
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
 
+        <AnimatePresence>
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className={`${isDarkMode ? 'bg-red-900/20 border-red-800 text-red-200' : 'bg-red-50 border-red-200 text-red-600'} border px-4 py-3 rounded-lg mb-6`}
+            >
             {error}
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <div className="mb-6">
-          <div className="flex space-x-4">
-            <button
+        <motion.div 
+          variants={fadeIn}
+          initial="hidden"
+          animate="visible"
+          className="mb-8"
+        >
+          <div className="flex flex-wrap gap-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setFilter('all')}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 filter === 'all'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md'
+                  : isDarkMode
+                    ? 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                    : 'bg-white/90 text-gray-700 hover:bg-gray-100/90'
               }`}
             >
               All
-            </button>
+            </motion.button>
             {Object.entries(STATUS_LABELS).map(([status, label]) => (
-              <button
+              <motion.button
                 key={status}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
+                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
                   filter === status
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                    ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md'
+                    : isDarkMode
+                      ? 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                      : 'bg-white/90 text-gray-700 hover:bg-gray-100/90'
                 }`}
               >
                 <div className={`w-2 h-2 rounded-full ${STATUS_COLORS[status]}`} />
                 <span>{label}</span>
-              </button>
+              </motion.button>
             ))}
           </div>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredProjects.map((project) => (
+            <ProjectCard key={project._id} project={project} />
+          ))}
         </div>
-
-        {filteredProjects.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">No projects found.</p>
-            <button
-              onClick={handleCreateProject}
-              className="mt-4 text-indigo-600 hover:text-indigo-500"
-            >
-              Create your first project
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => (
-              <div
-                key={project._id}
-                className="group block bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow p-6 relative"
-              >
-                {/* Project Menu */}
-                <div className="absolute top-4 right-4 project-menu">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMenuOpen(menuOpen === project._id ? null : project._id);
-                    }}
-                    className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <DotsVerticalIcon className="h-5 w-5 text-gray-500" />
-                  </button>
-                  
-                  {menuOpen === project._id && (
-                    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 z-10">
-                      <div className="py-1">
-                        {/* Status Update Options */}
-                        {Object.entries(STATUS_LABELS).map(([status, label]) => (
-                          <button
-                            key={status}
-                            onClick={() => {
-                              handleStatusChange(project._id, status);
-                              setMenuOpen(null);
-                            }}
-                            disabled={project.status === status || statusUpdateLoading === project._id}
-                            className={`flex items-center px-4 py-2 text-sm w-full text-left ${
-                              project.status === status
-                                ? 'bg-gray-100 dark:bg-gray-600 cursor-default'
-                                : 'hover:bg-gray-100 dark:hover:bg-gray-600'
-                            }`}
-                          >
-                            <div className={`w-2 h-2 rounded-full ${STATUS_COLORS[status]} mr-2`} />
-                            {label}
-                          </button>
-                        ))}
-                        <div className="border-t border-gray-200 dark:border-gray-600 my-1"></div>
-                        <button
-                          onClick={() => handleDeleteProject(project._id)}
-                          className="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left"
-                        >
-                          <TrashIcon className="h-4 w-4 mr-2" />
-                          Delete Project
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <Link to={`/project/${project._id}`} className="block">
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 pr-8">
-                    {project.title || 'Untitled Project'}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
-                    {project.description || 'No description'}
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-2 h-2 rounded-full ${STATUS_COLORS[project.status]}`} />
-                      <span className="text-sm text-gray-600 dark:text-gray-300">
-                        {STATUS_LABELS[project.status]}
-                      </span>
-                    </div>
-                    {statusUpdateLoading === project._id && (
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
-                    )}
-                  </div>
-                </Link>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

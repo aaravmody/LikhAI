@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { SearchIcon, BookOpenIcon, AcademicCapIcon } from '@heroicons/react/outline';
 import Navbar from '../components/Navbar';
+import { useTheme } from '../contexts/ThemeContext';
 
 // Pre-loaded tutorials data
 const TUTORIALS = [
@@ -146,6 +147,7 @@ const Tutorials = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [selectedTutorial, setSelectedTutorial] = useState(null);
+    const { isDarkMode } = useTheme();
 
     const categories = ['all', ...new Set(TUTORIALS.map(tutorial => tutorial.category))];
 
@@ -156,68 +158,107 @@ const Tutorials = () => {
         return matchesSearch && matchesCategory;
     });
 
+    // Animation variants
+    const fadeIn = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { 
+            opacity: 1, 
+            y: 0,
+            transition: { duration: 0.5 }
+        }
+    };
+
+    const cardHoverVariants = {
+        initial: { scale: 1 },
+        hover: { 
+            scale: 1.02,
+            boxShadow: isDarkMode 
+                ? '0 10px 25px -5px rgba(79, 70, 229, 0.4)' 
+                : '0 10px 25px -5px rgba(79, 70, 229, 0.3)',
+            transition: { duration: 0.2 }
+        },
+        tap: { scale: 0.98 }
+    };
+
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-indigo-50 via-white to-gray-50'} transition-colors duration-300`}>
             <Navbar />
             
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-indigo-500 rounded-full filter blur-3xl opacity-5"></div>
+            <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-purple-500 rounded-full filter blur-3xl opacity-5"></div>
+            
+            <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Header */}
-                <div className="text-center mb-12">
-                    <motion.h1 
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-4xl font-bold text-gray-900 dark:text-white mb-4"
-                    >
+                <motion.div 
+                    variants={fadeIn}
+                    initial="hidden"
+                    animate="visible"
+                    className="text-center mb-12"
+                >
+                    <h1 className={`text-4xl sm:text-5xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'} mb-4`}>
                         Writing Tutorials
-                    </motion.h1>
-                    <motion.p 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-xl text-gray-600 dark:text-gray-300"
-                    >
+                    </h1>
+                    <p className={`text-xl ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                         Enhance your writing skills with our curated collection of tutorials
-                    </motion.p>
-                </div>
+                    </p>
+                </motion.div>
 
                 {/* Search and Filter */}
-                <div className="mb-8 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                    <div className="relative w-full sm:w-96">
+                <motion.div 
+                    variants={fadeIn}
+                    initial="hidden"
+                    animate="visible"
+                    className="mb-12 space-y-6"
+                >
+                    <div className="relative w-full max-w-xl mx-auto">
                         <input
                             type="text"
                             placeholder="Search tutorials..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                            className={`w-full pl-12 pr-4 py-3 rounded-lg border ${
+                                isDarkMode 
+                                    ? 'bg-gray-800/50 border-gray-600 text-white placeholder-gray-400' 
+                                    : 'bg-white/90 border-gray-300 text-gray-900 placeholder-gray-500'
+                            } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200`}
                         />
-                        <SearchIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                        <SearchIcon className={`h-6 w-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'} absolute left-4 top-1/2 transform -translate-y-1/2`} />
                     </div>
-                    <div className="flex space-x-2 overflow-x-auto pb-2 w-full sm:w-auto">
+                    
+                    <div className="flex flex-wrap justify-center gap-2">
                         {categories.map(category => (
-                            <button
+                            <motion.button
                                 key={category}
                                 onClick={() => setSelectedCategory(category)}
-                                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap ${
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className={`px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                                     selectedCategory === category
-                                        ? 'bg-indigo-600 text-white'
-                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md'
+                                        : isDarkMode
+                                            ? 'bg-gray-800/50 text-gray-300 hover:bg-gray-700/50'
+                                            : 'bg-white/90 text-gray-700 hover:bg-gray-100/90'
                                 }`}
                             >
                                 {category.charAt(0).toUpperCase() + category.slice(1)}
-                            </button>
+                            </motion.button>
                         ))}
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Tutorials Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {filteredTutorials.map(tutorial => (
                         <motion.div
                             key={tutorial.id}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            whileHover={{ scale: 1.02 }}
-                            className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden cursor-pointer"
+                            variants={cardHoverVariants}
+                            initial="initial"
+                            whileHover="hover"
+                            whileTap="tap"
+                            className={`rounded-xl shadow-lg overflow-hidden cursor-pointer ${
+                                isDarkMode ? 'bg-gray-800/80 backdrop-blur-sm' : 'bg-white/90 backdrop-blur-sm'
+                            }`}
                             onClick={() => setSelectedTutorial(tutorial)}
                         >
                             <div className="relative pb-[56.25%]">
@@ -226,18 +267,18 @@ const Tutorials = () => {
                                     alt={tutorial.title}
                                     className="absolute inset-0 w-full h-full object-cover"
                                 />
-                                <div className="absolute top-2 right-2 px-2 py-1 bg-indigo-600 text-white text-xs rounded-full">
+                                <div className="absolute top-3 right-3 px-3 py-1 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-xs font-medium rounded-full shadow-md">
                                     {tutorial.type === 'video' ? 'Video' : 'Article'}
                                 </div>
                             </div>
-                            <div className="p-4">
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                            <div className="p-6">
+                                <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                     {tutorial.title}
                                 </h3>
-                                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                                <p className={`text-sm mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                                     {tutorial.description}
                                 </p>
-                                <div className="flex items-center text-sm text-indigo-600 dark:text-indigo-400">
+                                <div className={`flex items-center text-sm ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                                     <BookOpenIcon className="h-4 w-4 mr-1" />
                                     {tutorial.category}
                                 </div>
@@ -247,68 +288,86 @@ const Tutorials = () => {
                 </div>
 
                 {/* Tutorial Modal */}
-                {selectedTutorial && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <AnimatePresence>
+                    {selectedTutorial && (
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
                         >
-                            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                    {selectedTutorial.title}
-                                </h2>
-                                <button
-                                    onClick={() => setSelectedTutorial(null)}
-                                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                                >
-                                    ×
-                                </button>
-                            </div>
-                            <div className="p-4">
-                                {selectedTutorial.type === 'video' ? (
-                                    <div className="space-y-4">
-                                        <img
-                                            src={selectedTutorial.thumbnail}
-                                            alt={selectedTutorial.title}
-                                            className="w-full rounded-lg"
-                                        />
-                                        <p className="text-gray-600 dark:text-gray-300">
-                                            {selectedTutorial.description}
-                                        </p>
-                                        <a
-                                            href={selectedTutorial.videoUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-block px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                                        >
-                                            Watch on YouTube
-                                        </a>
-                                    </div>
-                                ) : (
-                                    <div className="prose dark:prose-invert max-w-none">
-                                        <img
-                                            src={selectedTutorial.image}
-                                            alt={selectedTutorial.title}
-                                            className="w-full rounded-lg mb-4"
-                                        />
-                                        <p className="text-gray-600 dark:text-gray-300">
-                                            {selectedTutorial.description}
-                                        </p>
-                                        <a
-                                            href={selectedTutorial.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-block mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                                        >
-                                            Read Full Article
-                                        </a>
-                                    </div>
-                                )}
-                            </div>
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className={`w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-xl ${
+                                    isDarkMode ? 'bg-gray-800/90 backdrop-blur-sm' : 'bg-white/90 backdrop-blur-sm'
+                                }`}
+                            >
+                                <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'} flex justify-between items-center`}>
+                                    <h2 className={`text-2xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                                        {selectedTutorial.title}
+                                    </h2>
+                                    <button
+                                        onClick={() => setSelectedTutorial(null)}
+                                        className={`text-2xl font-medium ${
+                                            isDarkMode 
+                                                ? 'text-gray-400 hover:text-gray-200' 
+                                                : 'text-gray-500 hover:text-gray-700'
+                                        } transition-colors`}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                                <div className="p-6">
+                                    {selectedTutorial.type === 'video' ? (
+                                        <div className="space-y-6">
+                                            <img
+                                                src={selectedTutorial.thumbnail}
+                                                alt={selectedTutorial.title}
+                                                className="w-full rounded-xl shadow-lg"
+                                            />
+                                            <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                                {selectedTutorial.description}
+                                            </p>
+                                            <motion.a
+                                                href={selectedTutorial.videoUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                className="inline-block px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white font-medium rounded-lg shadow-md hover:from-red-700 hover:to-red-600 transition-all duration-200"
+                                            >
+                                                Watch on YouTube
+                                            </motion.a>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            <img
+                                                src={selectedTutorial.image}
+                                                alt={selectedTutorial.title}
+                                                className="w-full rounded-xl shadow-lg"
+                                            />
+                                            <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                                                {selectedTutorial.description}
+                                            </p>
+                                            <motion.a
+                                                href={selectedTutorial.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                                className="inline-block px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-medium rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-600 transition-all duration-200"
+                                            >
+                                                Read Full Article
+                                            </motion.a>
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
                         </motion.div>
-                    </div>
-                )}
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

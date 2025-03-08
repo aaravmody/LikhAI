@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { UserAddIcon, UserGroupIcon } from '@heroicons/react/outline';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
+import { useTheme } from '../contexts/ThemeContext';
 
 const API_BASE_URL = 'http://localhost:5000/api/v1';
+
+const STATUS_COLORS = {
+  todo: 'bg-yellow-400',
+  inprogress: 'bg-blue-400',
+  underreview: 'bg-purple-400',
+  completed: 'bg-green-400'
+};
+
+const STATUS_LABELS = {
+  todo: 'To Do',
+  inprogress: 'In Progress',
+  underreview: 'Under Review',
+  completed: 'Completed'
+};
 
 const ProjectDetails = () => {
   const { id } = useParams();
@@ -19,6 +34,30 @@ const ProjectDetails = () => {
   const [collaboratorRole, setCollaboratorRole] = useState('viewer');
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+
+  const { isDarkMode } = useTheme();
+
+  // Animation variants
+  const fadeIn = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.5 }
+    }
+  };
+
+  const buttonHoverVariants = {
+    initial: { scale: 1 },
+    hover: { 
+      scale: 1.02,
+      boxShadow: isDarkMode 
+        ? '0 10px 25px -5px rgba(79, 70, 229, 0.4)' 
+        : '0 10px 25px -5px rgba(79, 70, 229, 0.3)',
+      transition: { duration: 0.2 }
+    },
+    tap: { scale: 0.98 }
+  };
 
   useEffect(() => {
     const fetchProjectAndDocuments = async () => {
@@ -181,168 +220,125 @@ const ProjectDetails = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-indigo-50 via-white to-gray-50'} transition-colors duration-300`}>
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+      {/* Decorative elements */}
+      <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-indigo-500 rounded-full filter blur-3xl opacity-5"></div>
+      <div className="absolute bottom-0 left-0 w-1/3 h-1/3 bg-purple-500 rounded-full filter blur-3xl opacity-5"></div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <motion.div
+          variants={fadeIn}
+          initial="hidden"
+          animate="visible"
+          className={`rounded-2xl shadow-xl overflow-hidden ${
+            isDarkMode ? 'bg-gray-800/80 backdrop-blur-sm' : 'bg-white/90 backdrop-blur-sm'
+          }`}
+        >
           {/* Project Header */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
             <div className="flex justify-between items-start">
               <div>
-                {isEditing ? (
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="text"
-                      value={editedTitle}
-                      onChange={(e) => setEditedTitle(e.target.value)}
-                      className="text-3xl font-bold bg-transparent border-b-2 border-indigo-600 focus:outline-none dark:text-white"
-                      autoFocus
-                    />
-                    <button
-                      onClick={handleUpdateProject}
-                      className="text-green-600 hover:text-green-700"
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsEditing(false);
-                        setEditedTitle(project.title);
-                      }}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                      {project?.title}
-                    </h1>
-                    <button
-                      onClick={() => {
-                        setIsEditing(true);
-                        setEditedTitle(project.title);
-                      }}
-                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-                <p className="text-gray-500 dark:text-gray-400">
-                  Created: {new Date(project?.createdAt).toLocaleDateString()}
+                <h1 className={`text-3xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  {project?.title || 'Loading...'}
+                </h1>
+                <p className={`text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {project?.description || 'No description'}
                 </p>
               </div>
-              <div className="flex space-x-4">
-                <button
-                  onClick={() => setShowCollaboratorModal(true)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors"
-                >
-                  <UserAddIcon className="h-5 w-5" />
-                  <span>Add Collaborator</span>
-                </button>
-                <button
+              <div className="flex items-center space-x-4">
+                <div className={`px-4 py-2 rounded-full text-sm font-medium ${STATUS_COLORS[project?.status]} shadow-sm`}>
+                  {STATUS_LABELS[project?.status]}
+                </div>
+                <motion.button
+                  variants={buttonHoverVariants}
+                  initial="initial"
+                  whileHover="hover"
+                  whileTap="tap"
                   onClick={handleCreateDocument}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-medium rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-600 transition-all duration-200"
                 >
                   New Document
-                </button>
+                </motion.button>
               </div>
             </div>
-            {project.description && (
-              <p className="mt-4 text-gray-600 dark:text-gray-300">
-                {project.description}
-              </p>
-            )}
           </div>
 
-          {/* Collaborators Section */}
-          {project.collaborators && project.collaborators.length > 0 && (
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                <UserGroupIcon className="h-5 w-5 mr-2" />
-                Collaborators
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {project.collaborators.map((collaborator) => (
-                  <div
-                    key={collaborator.user}
-                    className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                  >
-                    <div>
-                      <p className="text-gray-900 dark:text-white font-medium">
-                        {collaborator.user}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">
-                        {collaborator.role}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveCollaborator(collaborator.user)}
-                      className="text-red-600 hover:text-red-700 text-sm"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Documents List */}
-          <div className="p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          {/* Documents Section */}
+          <div className="p-8">
+            <h2 className={`text-2xl font-semibold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
               Documents
             </h2>
 
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                {error}
-              </div>
-            )}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className={`${isDarkMode ? 'bg-red-900/20 border-red-800 text-red-200' : 'bg-red-50 border-red-200 text-red-600'} border px-4 py-3 rounded-lg mb-6`}
+                >
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {documents.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-500 dark:text-gray-400">No documents yet.</p>
-                <button
+              <motion.div
+                variants={fadeIn}
+                initial="hidden"
+                animate="visible" 
+                className="text-center py-16"
+              >
+                <p className={`text-lg mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  No documents yet
+                </p>
+                <motion.button
+                  variants={buttonHoverVariants}
+                  initial="initial"
+                  whileHover="hover"
+                  whileTap="tap"
                   onClick={handleCreateDocument}
-                  className="mt-4 text-indigo-600 hover:text-indigo-500"
+                  className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-medium rounded-lg shadow-md hover:from-indigo-700 hover:to-indigo-600 transition-all duration-200"
                 >
                   Create your first document
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {documents.map((doc) => (
-                  <Link
+                  <motion.div
                     key={doc._id}
-                    to={`/editor/${doc._id}`}
-                    className="block bg-gray-50 dark:bg-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow"
+                    variants={buttonHoverVariants}
+                    initial="initial"
+                    whileHover="hover"
+                    whileTap="tap"
+                    onClick={() => navigate(`/editor/${doc._id}`)}
+                    className={`rounded-xl shadow-lg overflow-hidden cursor-pointer ${
+                      isDarkMode ? 'bg-gray-800/60 backdrop-blur-sm' : 'bg-white/80 backdrop-blur-sm'
+                    }`}
                   >
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                      {doc.title}
-                    </h3>
-                    {doc.description && (
-                      <p className="text-gray-500 dark:text-gray-400 mb-4 line-clamp-2">
-                        {doc.description}
-                      </p>
-                    )}
-                    <div className="flex justify-between items-center text-sm text-gray-500 dark:text-gray-400">
-                      <span>Version {doc.version}</span>
-                      <span>
-                        {new Date(doc.createdAt).toLocaleDateString()}
-                      </span>
+                    <div className="p-6">
+                      <h3 className={`text-lg font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {doc.title}
+                      </h3>
+                      {doc.description && (
+                        <p className={`text-sm mb-4 line-clamp-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                          {doc.description}
+                        </p>
+                      )}
+                      <div className={`flex justify-between items-center text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <span>Version {doc.version}</span>
+                        <span>{new Date(doc.createdAt).toLocaleDateString()}</span>
+                      </div>
                     </div>
-                  </Link>
+                  </motion.div>
                 ))}
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Add Collaborator Modal */}
