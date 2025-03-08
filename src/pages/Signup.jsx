@@ -6,7 +6,6 @@ import { useAuth } from '../contexts/AuthContext';
 const Signup = () => {
   const [formData, setFormData] = useState({
     email: '',
-    phone: '',
     confirmPassword: '',
     termscondition: false
   });
@@ -26,7 +25,7 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.email || !formData.phone || !formData.confirmPassword) {
+    if (!formData.email || !formData.confirmPassword) {
       return setError('Please fill in all required fields');
     }
 
@@ -85,22 +84,6 @@ const Signup = () => {
                 onChange={handleChange}
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Phone Number
-              </label>
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                required
-                value={formData.phone}
-                onChange={handleChange}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="+1234567890"
               />
             </div>
 

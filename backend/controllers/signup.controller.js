@@ -7,10 +7,10 @@ config()
 
 export const signupController = async (req, res) => {
     try {
-        const { email, phone, confirmPassword, termscondition } = req.body;
+        const { email, confirmPassword, termscondition } = req.body;
 
-        if (!email || !phone || !confirmPassword || !termscondition) {
-            return res.status(400).json({ message: 'All fields are required.',success:false });
+        if (!email || !confirmPassword || !termscondition) {
+            return res.status(400).json({ message: 'All fields are required.', success: false });
         }
 
         const existingUser = await userModel.findOne({ email });
@@ -23,23 +23,18 @@ export const signupController = async (req, res) => {
 
         const newUser = new userModel({
             email,
-            phone,
             password: hashedPassword,
             termscondition,
         });
-
-        console.log(newUser)
 
         await newUser.save();
 
         const token = jwt.sign({ userIdentifier: newUser.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        console.log(token)
-
-        return res.status(200).json({ message: 'User created successfully.',success:true,token });
+        return res.status(200).json({ message: 'User created successfully.', success: true, token });
     } catch (error) {
         console.error('Error during signup:', error);
-        return res.status(500).json({ message: 'Internal server error.',success:false });
+        return res.status(500).json({ message: 'Internal server error.', success: false });
     }
 };
 

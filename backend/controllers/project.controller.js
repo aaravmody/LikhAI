@@ -47,16 +47,30 @@ const createProject = async (req, res) => {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
 
+        // Create new project with minimal required fields
         const newProject = new projectModel({
             userId: user._id,
             name: title || 'Untitled Project',
             description: description || '',
-            docType: 'article', // Default type
-            status: 'inprogess', // Default status
-            collaborators: [] // Initially no collaborators
+            docType: 'article',
+            status: 'inprogess',
+            collaborators: []
         });
 
-        await newProject.save();
+        // Save the project and handle any potential errors
+        try {
+            await newProject.save();
+        } catch (saveError) {
+            // If there's a duplicate key error, try with a different name
+            if (saveError.code === 11000) {
+                // Add a timestamp to make the name unique
+                newProject.name = `${title || 'Untitled Project'} ${Date.now()}`;
+                await newProject.save();
+            } else {
+                throw saveError;
+            }
+        }
+
         res.status(201).json({ 
             success: true,
             message: 'Project created successfully',
@@ -213,10 +227,63 @@ const removeCollaborator = async (req, res) => {
     }
 };
 
+const updateProject = async (req, res) => {
+    try {
+        const { token, projectId, name, description } = req.body;
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Token required' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userEmail = decoded.userIdentifier;
+
+        const user = await userModel.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const project = await projectModel.findById(projectId);
+        if (!project) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+
+        // Check if user is the owner or an editor
+        const isOwner = project.userId.equals(user._id);
+        const isEditor = project.collaborators.some(c => c.user === userEmail && c.role === 'editor');
+        
+        if (!isOwner && !isEditor) {
+            return res.status(403).json({ success: false, message: 'Not authorized to edit this project' });
+        }
+
+        // Update project fields
+        if (name) project.name = name;
+        if (description) project.description = description;
+
+        await project.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'Project updated successfully',
+            project: {
+                _id: project._id,
+                title: project.name,
+                description: project.description,
+                createdAt: project.createdAt,
+                category: project.status
+            }
+        });
+    } catch (error) {
+        console.error('Error updating project:', error);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+    }
+};
+
 export {
     getUserProjects,
     createProject,
     fetchProjects,
     addCollaborator,
-    removeCollaborator
+    removeCollaborator,
+    updateProject
 }

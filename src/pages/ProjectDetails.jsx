@@ -17,6 +17,8 @@ const ProjectDetails = () => {
   const [showCollaboratorModal, setShowCollaboratorModal] = useState(false);
   const [collaboratorEmail, setCollaboratorEmail] = useState('');
   const [collaboratorRole, setCollaboratorRole] = useState('viewer');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
 
   useEffect(() => {
     const fetchProjectAndDocuments = async () => {
@@ -125,6 +127,32 @@ const ProjectDetails = () => {
     }
   };
 
+  const handleUpdateProject = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await axios.post(`${API_BASE_URL}/update-project`, {
+        token,
+        projectId: id,
+        name: editedTitle
+      });
+
+      if (response.data.success) {
+        setProject(prev => ({
+          ...prev,
+          title: editedTitle
+        }));
+        setIsEditing(false);
+      }
+    } catch (error) {
+      console.error('Error updating project:', error);
+      setError(error.response?.data?.message || 'Failed to update project');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -161,11 +189,51 @@ const ProjectDetails = () => {
           <div className="p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                  {project.title}
-                </h1>
+                {isEditing ? (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={editedTitle}
+                      onChange={(e) => setEditedTitle(e.target.value)}
+                      className="text-3xl font-bold bg-transparent border-b-2 border-indigo-600 focus:outline-none dark:text-white"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleUpdateProject}
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditing(false);
+                        setEditedTitle(project.title);
+                      }}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                      {project?.title}
+                    </h1>
+                    <button
+                      onClick={() => {
+                        setIsEditing(true);
+                        setEditedTitle(project.title);
+                      }}
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
                 <p className="text-gray-500 dark:text-gray-400">
-                  Created: {new Date(project.createdAt).toLocaleDateString()}
+                  Created: {new Date(project?.createdAt).toLocaleDateString()}
                 </p>
               </div>
               <div className="flex space-x-4">

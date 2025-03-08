@@ -19,17 +19,24 @@ const projectSchema = new mongoose.Schema({
             }
         }
     ],
-    name: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
     docType: { 
         type: String, 
         required: true, 
-        enum: ["script", "article", "marketing-material"]
+        enum: ["script", "article", "marketing-material"],
+        default: "article"
     },
     status: { 
         type: String, 
         required: true, 
-        enum: ["inprogess", "todo", "undereview"]
+        enum: ["inprogess", "todo", "undereview"],
+        default: "inprogess"
     },
 }, { timestamps: true });
+
+// Clear all existing indexes and create only the necessary ones
+projectSchema.index({}, { drop: true });
+projectSchema.index({ userId: 1 });
+projectSchema.index({ 'collaborators.user': 1 });
 
 export const projectModel = mongoose.model('Project', projectSchema);
