@@ -5,7 +5,7 @@ import { createServer } from 'http'
 import { connectDB } from './config/database.js'
 import { signupController } from './controllers/signup.controller.js'
 import { loginOtpController, loginPasswordController, verifyOtpController } from './controllers/login.controller.js'
-import { createProject, fetchProjects, addCollaborator, removeCollaborator, updateProject } from './controllers/project.controller.js'
+import { createProject, fetchProjects, addCollaborator, removeCollaborator, updateProject, deleteProject } from './controllers/project.controller.js'
 import { createDocument, getDocument, updateDocument, getUserDocuments, addComment, getComments } from './controllers/document.controller.js'
 import { setupWebSocket } from './websocket.js'
 
@@ -36,6 +36,7 @@ app.post("/api/v1/fetch-projects", fetchProjects);
 app.post("/api/v1/add-collaborator", addCollaborator);
 app.post("/api/v1/remove-collaborator", removeCollaborator);
 app.post("/api/v1/update-project", updateProject);
+app.post("/api/v1/delete-project", deleteProject);
 
 // Document routes
 app.post('/api/v1/create-document', createDocument);

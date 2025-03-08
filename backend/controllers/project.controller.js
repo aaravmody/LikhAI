@@ -279,11 +279,51 @@ const updateProject = async (req, res) => {
     }
 };
 
+const deleteProject = async (req, res) => {
+    try {
+        const { token, projectId } = req.body;
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Unauthorized: Token required' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const userEmail = decoded.userIdentifier;
+
+        const user = await userModel.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        const project = await projectModel.findById(projectId);
+        if (!project) {
+            return res.status(404).json({ success: false, message: 'Project not found' });
+        }
+
+        // Check if user is the project owner
+        if (!project.userId.equals(user._id)) {
+            return res.status(403).json({ success: false, message: 'Only project owner can delete the project' });
+        }
+
+        await projectModel.findByIdAndDelete(projectId);
+
+        res.status(200).json({
+            success: true,
+            message: 'Project deleted successfully'
+        });
+
+    } catch (error) {
+        console.error('Error deleting project:', error);
+        res.status(500).json({ success: false, message: error.message || 'Internal server error' });
+    }
+};
+
 export {
     getUserProjects,
     createProject,
     fetchProjects,
     addCollaborator,
     removeCollaborator,
-    updateProject
+    updateProject,
+    deleteProject
 }
