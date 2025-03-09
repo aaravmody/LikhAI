@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
-import { ChatAlt2Icon, ChartBarIcon, ClockIcon } from '@heroicons/react/outline';
+import { ChatAlt2Icon, ChartBarIcon, ClockIcon, MusicNoteIcon, PauseIcon } from '@heroicons/react/outline';
 import Navbar from '../components/Navbar';
 import LikhAIEditor from '../components/LikhAIEditor';
 import CommentSidebar from '../components/CommentSidebar';
@@ -28,6 +28,8 @@ const Editor = () => {
   const [isVersionSidebarOpen, setIsVersionSidebarOpen] = useState(false);
   const [versions, setVersions] = useState([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(new Audio('https://play.streamafrica.net/lofiradio'));
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -191,6 +193,15 @@ const Editor = () => {
     await handleSave(document.content);
   };
 
+  const toggleMusic = () => {
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -198,6 +209,8 @@ const Editor = () => {
       </div>
     );
   }
+
+  
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -224,6 +237,20 @@ const Editor = () => {
           {id !== 'new' && (
             <>
               <div className="fixed right-4 top-24 z-50 space-y-4">
+              <button
+                  onClick={toggleMusic}
+                  className="bg-indigo-600 text-white p-3 rounded-full shadow-lg hover:bg-indigo-700 transition-colors block relative group"
+                  title={isPlaying ? "Pause Music" : "Play LoFi Music"}
+                >
+                  {isPlaying ? (
+                    <PauseIcon className="h-6 w-6" />
+                  ) : (
+                    <MusicNoteIcon className="h-6 w-6" />
+                  )}
+                  <span className="absolute right-full mr-2 top-1/2 transform -translate-y-1/2 whitespace-nowrap bg-gray-900 text-white px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    {isPlaying ? "Pause Music" : "Play LoFi Music"}
+                  </span>
+                </button>
                 <button
                   onClick={() => {
                     setIsCommentSidebarOpen(!isCommentSidebarOpen);
