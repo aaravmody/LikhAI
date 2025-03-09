@@ -351,9 +351,12 @@ const getComments = async (req, res) => {
             _id: comment._id,
             text: comment.text,
             createdAt: comment.createdAt,
-            user: {
+            user: comment.userId ? {
                 _id: comment.userId._id,
                 email: comment.userId.email
+            } : {
+                _id: null,
+                email: 'Unknown User'
             }
         }));
 
@@ -398,9 +401,12 @@ const getDocumentVersions = async (req, res) => {
             versions: versions.map(v => ({
                 versionNumber: v.versionNumber,
                 content: v.content,
-                savedBy: {
+                savedBy: v.savedBy ? {
                     email: v.savedBy.email,
-                    fullname: v.savedBy.fullname || v.savedBy.email.split('@')[0]  // Fallback to email username if no fullname
+                    fullname: v.savedBy.fullname || v.savedBy.email.split('@')[0]
+                } : {
+                    email: 'Unknown User',
+                    fullname: 'Unknown User'
                 },
                 createdAt: v.createdAt
             }))

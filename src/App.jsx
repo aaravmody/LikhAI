@@ -10,8 +10,11 @@ import Dashboard from './pages/Dashboard';
 import ProjectDetails from './pages/ProjectDetails';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import Tutorials from './pages/Tutorials';
+import Pricing from './pages/Pricing';
+import Features from './pages/Features';
+import About from './pages/About';
 import ProtectedRoute from './components/ProtectedRoute';
+import Tutorials from './pages/Tutorials';
 
 function App() {
   return (
@@ -25,46 +28,60 @@ function App() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-200"
+                className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-200 relative overflow-hidden"
               >
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/tutorials" element={<Tutorials />} />
-                  <Route
-                    path="/editor/new"
-                    element={
-                      <ProtectedRoute>
-                        <Editor />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/editor/:id"
-                    element={
-                      <ProtectedRoute>
-                        <Editor />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/project/:id"
-                    element={
-                      <ProtectedRoute>
-                        <ProjectDetails />
-                      </ProtectedRoute>
-                    }
-                  />
-                </Routes>
+                {/* Background Pattern */}
+                <div className="absolute inset-0 bg-grid-pattern opacity-5 dark:opacity-10 pointer-events-none" />
+                
+                {/* Animated Gradient Orbs */}
+                <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
+                <div className="absolute top-0 -right-4 w-72 h-72 bg-indigo-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
+                <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000" />
+                
+                {/* Main Content */}
+                <div className="relative z-10">
+                  <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/features" element={<Features />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/tutorials" element={<Tutorials />} />
+                    <Route
+                      path="/editor/new"
+                      element={
+                        <ProtectedRoute>
+                          <Editor />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/editor/:id"
+                      element={
+                        <ProtectedRoute>
+                          <Editor />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <ProtectedRoute>
+                          <Dashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/project/:id"
+                      element={
+                        <ProtectedRoute>
+                          <ProjectDetails />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Routes>
+                </div>
               </motion.div>
             </AnimatePresence>
           </Router>
@@ -74,4 +91,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;
