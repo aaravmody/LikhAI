@@ -60,9 +60,12 @@ export function setupWebSocket(server) {
           // Handle different message types
           switch (message.type) {
             case 'content_update':
-              // Save content to database
-              document.content = message.content;
-              await document.save();
+              // Use findOneAndUpdate instead of direct save
+              await documentModel.findOneAndUpdate(
+                { _id: documentId },
+                { content: message.content },
+                { new: true }
+              );
               // Broadcast to other users
               broadcastToOthers(documentId, ws, {
                 type: 'content_update',
@@ -71,9 +74,12 @@ export function setupWebSocket(server) {
               break;
 
             case 'title_update':
-              // Save title to database
-              document.title = message.title;
-              await document.save();
+              // Use findOneAndUpdate for title updates too
+              await documentModel.findOneAndUpdate(
+                { _id: documentId },
+                { title: message.title },
+                { new: true }
+              );
               // Broadcast to other users
               broadcastToOthers(documentId, ws, {
                 type: 'title_update',

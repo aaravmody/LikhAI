@@ -213,7 +213,7 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
         content: newContent
       }));
     }
-  }, 1000);
+  }, 2000);
 
   const handleEditorChange = (newContent) => {
     setContent(newContent);

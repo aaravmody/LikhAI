@@ -218,7 +218,7 @@ const Editor = () => {
             initialTitle={document.title}
             isSaving={saving}
             documentId={id === 'new' ? null : id}
-            autoSave={false}
+            autoSave={true}
           />
 
           {id !== 'new' && (
