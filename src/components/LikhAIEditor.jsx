@@ -16,7 +16,8 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
   const [loading, setLoading] = useState(false);
   const [activeUsers, setActiveUsers] = useState([]);
   const isLocalChange = useRef(false);
-  const [saveTimeout, setSaveTimeout] = useState(null);
+  const pendingSave = useRef(null);
+  const skipNextUpdate = useRef(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const recognitionRef = useRef(null);
@@ -24,6 +25,7 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
   const [isPlagiarismChecking, setIsPlagiarismChecking] = useState(false);
   const [plagiarismResults, setPlagiarismResults] = useState(null);
   const [currentScene, setCurrentScene] = useState(null);
+  const lastLocalContent = useRef(initialContent || '');
 
   // Initialize speech recognition
   useEffect(() => {
@@ -124,6 +126,29 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
     setIsSpeaking(true);
   };
 
+  // Separate content broadcast from save
+  const broadcastContent = debounce((newContent) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      isLocalChange.current = true;
+      wsRef.current.send(JSON.stringify({
+        type: 'content_update',
+        content: newContent
+      }));
+    }
+  }, 1000);
+
+  // Separate autosave functionality
+  const autoSaveContent = debounce((newContent) => {
+    if (pendingSave.current === newContent) return;
+    pendingSave.current = newContent;
+    
+    onSave?.(newContent, false).finally(() => {
+      if (pendingSave.current === newContent) {
+        pendingSave.current = null;
+      }
+    });
+  }, 2000);
+
   useEffect(() => {
     // Connect to WebSocket for real-time collaboration
     const token = localStorage.getItem('token');
@@ -139,20 +164,26 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
       const data = JSON.parse(event.data);
       
       if (data.type === 'content_update' && !isLocalChange.current) {
-        // Update content from other users
-        setContent(data.content);
         if (editorRef.current) {
           const editor = editorRef.current;
-          const cursorPos = editor.selection.getRng();
-          editor.setContent(data.content);
-          editor.selection.setRng(cursorPos);
+          
+          // Skip if this is our own change
+          if (skipNextUpdate.current) {
+            skipNextUpdate.current = false;
+            return;
+          }
+
+          // Only update if content is actually different
+          const currentContent = editor.getContent();
+          if (currentContent !== data.content) {
+            setContent(data.content);
+            editor.setContent(data.content);
+          }
         }
       } else if (data.type === 'title_update' && !isLocalChange.current) {
-        // Update title from other users
         setTitle(data.title);
         onTitleChange?.(data.title);
       } else if (data.type === 'active_users') {
-        // Update list of active users
         setActiveUsers(data.users);
       }
       
@@ -165,6 +196,12 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
 
     wsRef.current.onclose = () => {
       console.log('WebSocket disconnected');
+      // Try to reconnect after a delay
+      setTimeout(() => {
+        if (wsRef.current?.readyState === WebSocket.CLOSED) {
+          wsRef.current = new WebSocket(`${WS_BASE_URL}/document/${documentId}?token=${token}`);
+        }
+      }, 3000);
     };
 
     return () => {
@@ -179,46 +216,15 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
     setContent(initialContent);
   }, [initialTitle, initialContent]);
 
-  useEffect(() => {
-    if (autoSave && content !== initialContent) {
-      // Clear existing timeout
-      if (saveTimeout) {
-        clearTimeout(saveTimeout);
-      }
-
-      // Set new timeout
-      const timeoutId = setTimeout(() => {
-        onSave(content, false);
-      }, 2000);
-
-      setSaveTimeout(timeoutId);
-    }
-
-    return () => {
-      if (saveTimeout) {
-        clearTimeout(saveTimeout);
-      }
-    };
-  }, [content, initialContent, onSave, autoSave]);
-
-  // Debounced auto-save and broadcast changes
-  const debouncedSave = debounce((newContent) => {
-    isLocalChange.current = true;
-    onSave?.(newContent, false);
-    
-    // Broadcast content change to other users
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: 'content_update',
-        content: newContent
-      }));
-    }
-  }, 2000);
-
   const handleEditorChange = (newContent) => {
+    // Update local content immediately
     setContent(newContent);
+    
+    // Handle collaboration and autosave separately
     if (autoSave) {
-    debouncedSave(newContent);
+      skipNextUpdate.current = true; // Skip the next update as it's our own
+      broadcastContent(newContent);  // Broadcast changes to other users
+      // autoSaveContent(newContent);   // Save to backend without affecting editor
     }
   };
 
@@ -237,7 +243,17 @@ const LikhAIEditor = ({ onSave, onTitleChange, initialTitle = "Untitled Document
   };
 
   const handleSave = () => {
+    // Manual save should be immediate and not debounced
+    skipNextUpdate.current = true;
     onSave(content, true);
+    
+    // Broadcast the save
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({
+        type: 'content_update',
+        content: content
+      }));
+    }
   };
 
   const handleExport = (format) => {
